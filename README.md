@@ -12,21 +12,24 @@ Welcome to my GitHub profile! Read to know more about me.
 - Education: I am currently in China Jiliang University pursuing my bachelor's degree.
 - Learning: 
 	- MySQL
-	- Assembly
-	- Azure
+ 	- SQLite
+	- x86 Assembly 
+	- MSP430 & Tiva board
+	- Django
 - Learned:
 	- Java
-	- Python (Mainly in machine learning, computer vision, deep learning and data analysis)
-	- HTML
-	- CSS
+	- Python (Mainly in machine learning with PyTorch, computer vision, deep learning and data analysis)
+	- HTML & CSS
 	- JavaScript
-	- Blender
+	- Blender modelling 
 	- C/C++ (Mainly for STM32 and other enbedded programming)
-	- STM32
 	- ESP32
 	- 89C51
-	- PyQT
-	- Aardio (A quick desktop app develop tool for Windows)
+	- PyQT5
+	- Flask
+	- Aardio (A quick desktop app development tool for Windows)
+	- OpenCV
+	- OpenMV 
 - Gender: Male
 - Hobbies: I like to read or go watching movies when spare. I also play the guitar. 
 - Email: neolux_lee@outlook.com
