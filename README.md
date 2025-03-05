@@ -34,4 +34,10 @@ Welcome to my GitHub profile! Read to know more about me.
 - Hobbies: I like to read or go watching movies when spare. I also play the guitar. 
 - Email: neolux_lee@outlook.com
 
+![](https://github-readme-stats.vercel.app/api?username=neoluxis&show_icons=true&theme=transparent)
 
+![Top Langs](https://github-readme-stats.vercel.app/api/top-langs/?username=neoluxis&layout=compact&theme=tokyonight)
+
+![](https://github-readme-activity-graph.cyclic.app/graph?username=neoluxis&theme=dracula)
+
+You're the ![Visitor Count](https://profile-counter.glitch.me/neoluxis/count.svg)th visitor to my page
