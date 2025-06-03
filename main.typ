@@ -15,7 +15,7 @@
 // 是否展示在项目中做了什么。如果不展示会有比较大的吹牛空间
 #let show_duty = 1
 // project bgblock
-#let projblock = 0
+#let projblock = 1
 
 #stack(dir: ltr, spacing: 1fr, text(24pt)[*李康峰*], stack(
   spacing: 0.75em,
