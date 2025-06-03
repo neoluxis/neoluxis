@@ -24,17 +24,46 @@ jobs:
           sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra
           fc-cache -fv
 
-      - name: Compile resume
+      - name: Compile PDF with current date
         run: |
           mkdir -p output
           DATE=$(date +%Y-%m-%d)
           FILENAME=resume-${DATE}.pdf
-          echo "PDF_NAME=${FILENAME}" >> $GITHUB_ENV
-          typst compile main.typ output/${FILENAME}
+          echo "FILENAME=$FILENAME" >> $GITHUB_ENV
+          typst compile main.typ output/$FILENAME
+
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy new PDF and update notes.json
+        run: |
+          cp output/$FILENAME gh-pages/
+          cd gh-pages
+
+          # 更新 notes.json
+          NOTE_TEXT="自动生成：更新内容请手动编辑 notes.json"
+          if [ -f notes.json ]; then
+            jq --arg f "$FILENAME" --arg n "$NOTE_TEXT" '. + {($f): $n}' notes.json > tmp.json && mv tmp.json notes.json
+          else
+            echo "{\"$FILENAME\": \"$NOTE_TEXT\"}" > notes.json
+          fi
+
+          # 生成 index.html
+          echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>简历历史</title><style>body{font-family:sans-serif;max-width:700px;margin:auto;padding:2em}li{margin-bottom:1em}.note{color:#666;font-size:.9em}</style></head><body><h1>历史简历版本</h1><ul>' > index.html
+
+          for f in $(ls resume-*.pdf | sort -r); do
+            desc=$(jq -r --arg f "$f" '.[$f] // "无备注"' notes.json)
+            echo "<li><a href=\"$f\">$f</a><br/><span class=\"note\">$desc</span></li>" >> index.html
+          done
+
+          echo '</ul></body></html>' >> index.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./output
+          publish_dir: gh-pages
           keep_files: true
