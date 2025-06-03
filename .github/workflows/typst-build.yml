@@ -53,12 +53,14 @@ jobs:
           # Init notes.json if not present
           if [ ! -f notes.json ]; then echo '{}' > notes.json; fi
 
-          # Update notes.json
-          jq --arg f "${{ steps.meta.outputs.filename }}" --arg m "${{ steps.meta.outputs.message }}" '. + {($f): .[$f] // $m}' notes.json > tmp.json && mv tmp.json notes.json
+          # Update notes.json with commit message
+          jq --arg f "${{ steps.meta.outputs.filename }}" --arg m "${{ steps.meta.outputs.message }}" \
+            '. + {($f): .[$f] // $m}' notes.json > tmp.json && mv tmp.json notes.json
 
       - name: Write resumes.html
         run: |
-          cat > gh-pages/resumes.html <<'EOF'
+          cd gh-pages
+          cat <<'EOF' > resumes.html
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -110,16 +112,16 @@ jobs:
       const list = document.getElementById("list");
       list.innerHTML = "<ul>" + slice.map(item => `
         <li>
-          <a href="${item.filename}" target="_blank">${item.date} 简历</a><br/>
-          <span class="note">${item.desc}</span>
+          <a href="\${item.filename}" target="_blank">\${item.date} 简历</a><br/>
+          <span class="note">\${item.desc}</span>
         </li>`).join("") + "</ul>";
 
       const totalPages = Math.ceil(data.length / perPage);
       const pagination = document.getElementById("pagination");
       pagination.innerHTML = `
-        第 ${page} 页（共 ${totalPages} 页）<br/>
-        ${page > 1 ? '<button onclick="renderPage(parsedData, ' + (page - 1) + ')">← 上一页</button>' : ''}
-        ${page < totalPages ? '<button onclick="renderPage(parsedData, ' + (page + 1) + ')">下一页 →</button>' : ''}
+        第 \${page} 页（共 \${totalPages} 页）<br/>
+        \${page > 1 ? '<button onclick="renderPage(parsedData, ' + (page - 1) + ')">← 上一页</button>' : ''}
+        \${page < totalPages ? '<button onclick="renderPage(parsedData, ' + (page + 1) + ')">下一页 →</button>' : ''}
       `;
     }
 
@@ -133,9 +135,10 @@ jobs:
 </html>
 EOF
 
-      - name: Write index.html (homepage)
+      - name: Write index.html
         run: |
-          cat > gh-pages/index.html <<'EOF'
+          cd gh-pages
+          cat <<'EOF' > index.html
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -163,11 +166,11 @@ EOF
 </html>
 EOF
 
-      - name: Commit and push to gh-pages
+      - name: Commit and push
         run: |
           cd gh-pages
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add .
-          git commit -m "Update resume: ${{ steps.meta.outputs.filename }}" || echo "No changes"
+          git commit -m "Update resume: ${{ steps.meta.outputs.filename }}" || echo "No changes to commit"
           git push origin gh-pages
