@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      - name: Checkout main branch
         uses: actions/checkout@v3
 
-      - name: Install Typst
+      - name: Set up Typst
         uses: typst-community/setup-typst@v3
 
       - name: Install Chinese fonts
@@ -24,7 +24,7 @@ jobs:
           sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra
           fc-cache -fv
 
-      - name: Get filename and commit info
+      - name: Extract metadata
         id: meta
         run: |
           DATE=$(date +%Y-%m-%d)
@@ -34,46 +34,106 @@ jobs:
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
           echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
 
-      - name: Compile PDF
+      - name: Compile Typst to PDF
         run: |
           mkdir -p output
           typst compile main.typ output/${{ steps.meta.outputs.filename }}
 
-      - name: Checkout gh-pages branch
+      - name: Checkout gh-pages
         uses: actions/checkout@v3
         with:
           ref: gh-pages
           path: gh-pages
 
-      - name: Copy new PDF and update notes
+      - name: Copy PDF and update notes
         run: |
           cd gh-pages
-          cp ../output/${{ steps.meta.outputs.filename }} .
-
-          # 更新 notes.json（保留已有备注）
-          NOTE_FILE="notes.json"
-          NOTE_TEXT="${{ steps.meta.outputs.message }}"
           FILENAME="${{ steps.meta.outputs.filename }}"
+          MESSAGE="${{ steps.meta.outputs.message }}"
 
-          if [ -f $NOTE_FILE ]; then
-            jq --arg f "$FILENAME" --arg n "$NOTE_TEXT" '. + {($f): .[$f] // $n}' $NOTE_FILE > tmp.json && mv tmp.json $NOTE_FILE
-          else
-            echo "{\"$FILENAME\": \"$NOTE_TEXT\"}" > $NOTE_FILE
+          cp ../output/$FILENAME .
+
+          # Update notes.json
+          if [ ! -f notes.json ]; then
+            echo '{}' > notes.json
           fi
 
-          # 生成 index.html
-          echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>简历历史</title><style>body{font-family:sans-serif;max-width:700px;margin:auto;padding:2em}li{margin-bottom:1em}.note{color:#666;font-size:.9em}</style></head><body><h1>历史简历版本</h1><ul>' > index.html
+          jq --arg f "$FILENAME" --arg m "$MESSAGE" '. + {($f): .[$f] // $m}' notes.json > tmp.json && mv tmp.json notes.json
 
-          for f in $(ls resume-*.pdf | sort -r); do
-            desc=$(jq -r --arg f "$f" '.[$f] // "无备注"' $NOTE_FILE)
-            echo "<li><a href=\"$f\">$f</a><br/><span class=\"note\">$desc</span></li>" >> index.html
-          done
+          # Generate index.html
+          cat > index.html <<EOF
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>历史简历版本</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 2em; }
+    h1 { margin-bottom: 1em; }
+    ul { padding-left: 1em; }
+    li { margin-bottom: 1.5em; }
+    .note { color: #555; font-size: 0.9em; }
+    .pagination { margin-top: 2em; }
+    .pagination button { margin: 0 5px; }
+  </style>
+</head>
+<body>
+  <h1>历史简历版本</h1>
+  <div id="list"></div>
+  <div class="pagination" id="pagination"></div>
 
-          echo '</ul></body></html>' >> index.html
+  <script>
+    const notes = $(cat notes.json);
+    const files = Object.keys(notes);
+    const parsed = files.map(filename => {
+      const match = filename.match(/resume-(\\d{4}-\\d{2}-\\d{2})-([a-z0-9]+)\\.pdf/);
+      if (!match) return null;
+      return {
+        filename,
+        date: match[1],
+        hash: match[2],
+        desc: notes[filename],
+        timestamp: new Date(match[1]).getTime()
+      };
+    }).filter(Boolean).sort((a, b) => b.timestamp - a.timestamp);
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: gh-pages
-          keep_files: true
+    const perPage = 10;
+    let currentPage = 1;
+
+    function renderPage(page) {
+      const start = (page - 1) * perPage;
+      const end = start + perPage;
+      const slice = parsed.slice(start, end);
+
+      const list = document.getElementById("list");
+      list.innerHTML = "<ul>" + slice.map(item => \`
+        <li>
+          <a href="\${item.filename}">\${item.date} 简历</a><br/>
+          <span class="note">\${item.desc}</span>
+        </li>\`).join("") + "</ul>";
+
+      const totalPages = Math.ceil(parsed.length / perPage);
+      const pagination = document.getElementById("pagination");
+      pagination.innerHTML = \`
+        第 \${page} 页（共 \${totalPages} 页）
+        \${page > 1 ? '<button onclick="renderPage(' + (page - 1) + ')">← 上一页</button>' : ''}
+        \${page < totalPages ? '<button onclick="renderPage(' + (page + 1) + ')">下一页 →</button>' : ''}
+      \`;
+
+      currentPage = page;
+    }
+
+    renderPage(1);
+  </script>
+</body>
+</html>
+EOF
+
+      - name: Commit and push to gh-pages
+        run: |
+          cd gh-pages
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Update resume: ${{ steps.meta.outputs.filename }}" || echo "No changes"
+          git push origin gh-pages
