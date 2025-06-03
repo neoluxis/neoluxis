@@ -1,10 +1,9 @@
-name: Build Typst Resume
+name: Build Typst Chinese PDF
 
 on:
   push:
     paths:
-      - 'main.typ'
-      - '**/*.typ'
+      - '**.typ'
   workflow_dispatch:
 
 jobs:
@@ -12,17 +11,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v3
 
       - name: Install Typst
         uses: typst-community/setup-typst@v3
 
-      - name: Compile main.typ
-        run: typst compile main.typ
+      - name: Install Chinese fonts
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra fonts-noto-color-emoji
 
-      - name: Upload PDF artifact
+      - name: Set up font cache
+        run: fc-cache -fv
+
+      - name: Compile main.typ
+        run: |
+          mkdir -p output
+          typst compile main.typ output/main.pdf
+
+      - name: Upload PDF (uncompressed)
         uses: actions/upload-artifact@v4
         with:
-            name: main-pdf
-            path: main.pdf
+          name: main.pdf
+          path: output/main.pdf
+          if-no-files-found: error
+          compression-level: 0   # 强制不压缩（仍为 zip，但无压缩）
