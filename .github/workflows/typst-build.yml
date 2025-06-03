@@ -32,13 +32,9 @@ jobs:
           echo "PDF_NAME=${FILENAME}" >> $GITHUB_ENV
           typst compile main.typ output/${FILENAME}
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload to gh-pages
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./output
           keep_files: true
-          destination_dir: .
