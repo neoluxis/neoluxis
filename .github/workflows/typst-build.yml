@@ -24,13 +24,20 @@ jobs:
           sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra
           fc-cache -fv
 
-      - name: Compile PDF with current date
+      - name: Get filename and commit info
+        id: meta
+        run: |
+          DATE=$(date +%Y-%m-%d)
+          COMMIT_HASH=$(git rev-parse --short HEAD)
+          COMMIT_MSG=$(git log -1 --pretty=%s)
+          FILENAME="resume-${DATE}-${COMMIT_HASH}.pdf"
+          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+
+      - name: Compile PDF
         run: |
           mkdir -p output
-          DATE=$(date +%Y-%m-%d)
-          FILENAME=resume-${DATE}.pdf
-          echo "FILENAME=$FILENAME" >> $GITHUB_ENV
-          typst compile main.typ output/$FILENAME
+          typst compile main.typ output/${{ steps.meta.outputs.filename }}
 
       - name: Checkout gh-pages branch
         uses: actions/checkout@v3
@@ -38,24 +45,27 @@ jobs:
           ref: gh-pages
           path: gh-pages
 
-      - name: Copy new PDF and update notes.json
+      - name: Copy new PDF and update notes
         run: |
-          cp output/$FILENAME gh-pages/
           cd gh-pages
+          cp ../output/${{ steps.meta.outputs.filename }} .
 
-          # 更新 notes.json
-          NOTE_TEXT="自动生成：更新内容请手动编辑 notes.json"
-          if [ -f notes.json ]; then
-            jq --arg f "$FILENAME" --arg n "$NOTE_TEXT" '. + {($f): $n}' notes.json > tmp.json && mv tmp.json notes.json
+          # 更新 notes.json（保留已有备注）
+          NOTE_FILE="notes.json"
+          NOTE_TEXT="${{ steps.meta.outputs.message }}"
+          FILENAME="${{ steps.meta.outputs.filename }}"
+
+          if [ -f $NOTE_FILE ]; then
+            jq --arg f "$FILENAME" --arg n "$NOTE_TEXT" '. + {($f): .[$f] // $n}' $NOTE_FILE > tmp.json && mv tmp.json $NOTE_FILE
           else
-            echo "{\"$FILENAME\": \"$NOTE_TEXT\"}" > notes.json
+            echo "{\"$FILENAME\": \"$NOTE_TEXT\"}" > $NOTE_FILE
           fi
 
           # 生成 index.html
           echo '<!DOCTYPE html><html><head><meta charset="utf-8"><title>简历历史</title><style>body{font-family:sans-serif;max-width:700px;margin:auto;padding:2em}li{margin-bottom:1em}.note{color:#666;font-size:.9em}</style></head><body><h1>历史简历版本</h1><ul>' > index.html
 
           for f in $(ls resume-*.pdf | sort -r); do
-            desc=$(jq -r --arg f "$f" '.[$f] // "无备注"' notes.json)
+            desc=$(jq -r --arg f "$f" '.[$f] // "无备注"' $NOTE_FILE)
             echo "<li><a href=\"$f\">$f</a><br/><span class=\"note\">$desc</span></li>" >> index.html
           done
 
