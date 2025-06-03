@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <title>历史简历版本</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 2em; }
+    h1 { margin-bottom: 1em; }
+    ul { padding-left: 1em; }
+    li { margin-bottom: 1.5em; }
+    .note { color: #555; font-size: 0.9em; }
+    .pagination { margin-top: 2em; }
+    .pagination button { margin: 0 5px; }
+    a.button { text-decoration: none; background: #ccc; padding: 0.3em 0.6em; border-radius: 4px; color: black; }
+  </style>
+</head>
+<body>
+  <h1>历史简历版本</h1>
+  <p><a class="button" href="index.html">← 返回主页</a></p>
+  <div id="list"></div>
+  <div class="pagination" id="pagination"></div>
+
+  <script>
+    async function loadNotes() {
+      const response = await fetch('notes.json');
+      const notes = await response.json();
+
+      const files = Object.keys(notes);
+      const parsed = files.map(filename => {
+        const match = filename.match(/resume-(\\d{4}-\\d{2}-\\d{2})-([a-z0-9]+)\\.pdf/);
+        if (!match) return null;
+        return {
+          filename,
+          date: match[1],
+          hash: match[2],
+          desc: notes[filename],
+          timestamp: new Date(match[1]).getTime()
+        };
+      }).filter(Boolean).sort((a, b) => b.timestamp - a.timestamp);
+
+      return parsed;
+    }
+
+    function renderPage(data, page = 1, perPage = 10) {
+      const start = (page - 1) * perPage;
+      const end = start + perPage;
+      const slice = data.slice(start, end);
+
+      const list = document.getElementById("list");
+      list.innerHTML = "<ul>" + slice.map(item => `
+        <li>
+          <a href="${item.filename}" target="_blank">${item.date} 简历</a><br/>
+          <span class="note">${item.desc}</span>
+        </li>`).join("") + "</ul>";
+
+      const totalPages = Math.ceil(data.length / perPage);
+      const pagination = document.getElementById("pagination");
+      pagination.innerHTML = `
+        第 ${page} 页（共 ${totalPages} 页）<br/>
+        ${page > 1 ? '<button onclick="renderPage(parsedData, ' + (page - 1) + ')">← 上一页</button>' : ''}
+        ${page < totalPages ? '<button onclick="renderPage(parsedData, ' + (page + 1) + ')">下一页 →</button>' : ''}
+      `;
+    }
+
+    let parsedData = [];
+    loadNotes().then(data => {
+      parsedData = data;
+      renderPage(parsedData, 1);
+    });
+  </script>
+</body>
+</html>
