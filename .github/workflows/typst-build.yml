@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      - name: Checkout main
         uses: actions/checkout@v3
 
       - name: Set up Typst
@@ -20,8 +20,8 @@ jobs:
 
       - name: Install Chinese fonts
         run: |
-          sudo apt-get update
-          sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra
+          sudo apt update
+          sudo apt install -y fonts-noto-cjk fonts-noto-cjk-extra
           fc-cache -fv
 
       - name: Extract metadata
@@ -34,7 +34,7 @@ jobs:
           echo "filename=$FILENAME" >> $GITHUB_OUTPUT
           echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
 
-      - name: Compile Typst to PDF
+      - name: Compile PDF
         run: |
           mkdir -p output
           typst compile main.typ output/${{ steps.meta.outputs.filename }}
@@ -45,23 +45,51 @@ jobs:
           ref: gh-pages
           path: gh-pages
 
-      - name: Copy PDF and update notes.json
+      - name: Update PDF and notes.json
         run: |
           cd gh-pages
           cp ../output/${{ steps.meta.outputs.filename }} .
 
-          # Init notes.json if not present
-          if [ ! -f notes.json ]; then echo '{}' > notes.json; fi
+          # init notes.json
+          if [ ! -f notes.json ]; then echo "{}" > notes.json; fi
 
-          # Update notes.json with commit message
+          # update notes.json
           jq --arg f "${{ steps.meta.outputs.filename }}" --arg m "${{ steps.meta.outputs.message }}" \
-            '. + {($f): .[$f] // $m}' notes.json > tmp.json && mv tmp.json notes.json
+            '. + {($f): .[$f] // $m}' notes.json > tmp && mv tmp notes.json
+
+      - name: Write index.html
+        run: |
+          cd gh-pages
+          echo '<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>我的简历主页</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; max-width: 800px; margin: auto; }
+    h1 { font-size: 2em; margin-bottom: 0.5em; }
+    a.button {
+      display: inline-block;
+      padding: 0.5em 1em;
+      background: #007acc;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-top: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>欢迎来到我的简历主页</h1>
+  <p>查看不同时间点生成的 PDF 简历历史版本，包含自动描述、分页展示。</p>
+  <a class="button" href="resumes.html">📄 查看简历历史版本</a>
+</body>
+</html>' > index.html
 
       - name: Write resumes.html
         run: |
           cd gh-pages
-          cat <<'EOF' > resumes.html
-<!DOCTYPE html>
+          echo '<!DOCTYPE html>
 <html lang="zh">
 <head>
   <meta charset="UTF-8" />
@@ -85,7 +113,7 @@ jobs:
 
   <script>
     async function loadNotes() {
-      const response = await fetch('notes.json');
+      const response = await fetch("notes.json");
       const notes = await response.json();
 
       const files = Object.keys(notes);
@@ -132,45 +160,13 @@ jobs:
     });
   </script>
 </body>
-</html>
-EOF
+</html>' > resumes.html
 
-      - name: Write index.html
-        run: |
-          cd gh-pages
-          cat <<'EOF' > index.html
-<!DOCTYPE html>
-<html lang="zh">
-<head>
-  <meta charset="UTF-8">
-  <title>我的简历主页</title>
-  <style>
-    body { font-family: sans-serif; padding: 2em; max-width: 800px; margin: auto; }
-    h1 { font-size: 2em; margin-bottom: 0.5em; }
-    a.button {
-      display: inline-block;
-      padding: 0.5em 1em;
-      background: #007acc;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-      margin-top: 1em;
-    }
-  </style>
-</head>
-<body>
-  <h1>欢迎来到我的简历主页</h1>
-  <p>查看不同时间点生成的 PDF 简历历史版本，包含自动描述、分页展示。</p>
-  <a class="button" href="resumes.html">📄 查看简历历史版本</a>
-</body>
-</html>
-EOF
-
-      - name: Commit and push
+      - name: Commit and push to gh-pages
         run: |
           cd gh-pages
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add .
-          git commit -m "Update resume: ${{ steps.meta.outputs.filename }}" || echo "No changes to commit"
+          git commit -m "Update resume: ${{ steps.meta.outputs.filename }}" || echo "No changes"
           git push origin gh-pages
