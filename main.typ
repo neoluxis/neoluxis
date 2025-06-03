@@ -3,9 +3,9 @@
 
 #show: resume-init.with(
   author: "李康峰",
-  // footer: [李康峰 #h(0.5em) #link(
-  //     "https://me.neolux.eu.org",
-  //   )],
+  footer: [李康峰 #h(0.5em) #link(
+      "https://me.neolux.eu.org",
+    )],
 )
 
 #set text(font: ("Noto Serif CJK SC"), lang: "zh", region: "cn")
