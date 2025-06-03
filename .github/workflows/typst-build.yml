@@ -1,172 +1,39 @@
-name: Build and Deploy Typst Resume
+name: Build Typst Chinese PDF
 
 on:
   push:
-    branches: [main]
     paths:
       - '**.typ'
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Typst
+      - name: Install Typst
         uses: typst-community/setup-typst@v3
 
       - name: Install Chinese fonts
         run: |
-          sudo apt update
-          sudo apt install -y fonts-noto-cjk fonts-noto-cjk-extra
-          fc-cache -fv
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra fonts-noto-color-emoji
 
-      - name: Extract metadata
-        id: meta
-        run: |
-          DATE=$(date +%Y-%m-%d)
-          COMMIT_HASH=$(git rev-parse --short HEAD)
-          COMMIT_MSG=$(git log -1 --pretty=%s)
-          FILENAME="resume-${DATE}-${COMMIT_HASH}.pdf"
-          echo "filename=$FILENAME" >> $GITHUB_OUTPUT
-          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+      - name: Set up font cache
+        run: fc-cache -fv
 
-      - name: Compile PDF
+      - name: Compile main.typ
         run: |
           mkdir -p output
-          typst compile main.typ output/${{ steps.meta.outputs.filename }}
+          typst compile main.typ output/main.pdf
 
-      - name: Checkout gh-pages
-        uses: actions/checkout@v3
+      - name: Upload PDF (uncompressed)
+        uses: actions/upload-artifact@v4
         with:
-          ref: gh-pages
-          path: gh-pages
-
-      - name: Update PDF and notes.json
-        run: |
-          cd gh-pages
-          cp ../output/${{ steps.meta.outputs.filename }} .
-
-          # init notes.json
-          if [ ! -f notes.json ]; then echo "{}" > notes.json; fi
-
-          # update notes.json
-          jq --arg f "${{ steps.meta.outputs.filename }}" --arg m "${{ steps.meta.outputs.message }}" \
-            '. + {($f): .[$f] // $m}' notes.json > tmp && mv tmp notes.json
-
-      - name: Write index.html
-        run: |
-          cd gh-pages
-          echo '<!DOCTYPE html>
-<html lang="zh">
-<head>
-  <meta charset="UTF-8">
-  <title>我的简历主页</title>
-  <style>
-    body { font-family: sans-serif; padding: 2em; max-width: 800px; margin: auto; }
-    h1 { font-size: 2em; margin-bottom: 0.5em; }
-    a.button {
-      display: inline-block;
-      padding: 0.5em 1em;
-      background: #007acc;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-      margin-top: 1em;
-    }
-  </style>
-</head>
-<body>
-  <h1>欢迎来到我的简历主页</h1>
-  <p>查看不同时间点生成的 PDF 简历历史版本，包含自动描述、分页展示。</p>
-  <a class="button" href="resumes.html">📄 查看简历历史版本</a>
-</body>
-</html>' > index.html
-
-      - name: Write resumes.html
-        run: |
-          cd gh-pages
-          echo '<!DOCTYPE html>
-<html lang="zh">
-<head>
-  <meta charset="UTF-8" />
-  <title>历史简历版本</title>
-  <style>
-    body { font-family: sans-serif; max-width: 800px; margin: auto; padding: 2em; }
-    h1 { margin-bottom: 1em; }
-    ul { padding-left: 1em; }
-    li { margin-bottom: 1.5em; }
-    .note { color: #555; font-size: 0.9em; }
-    .pagination { margin-top: 2em; }
-    .pagination button { margin: 0 5px; }
-    a.button { text-decoration: none; background: #ccc; padding: 0.3em 0.6em; border-radius: 4px; color: black; }
-  </style>
-</head>
-<body>
-  <h1>历史简历版本</h1>
-  <p><a class="button" href="index.html">← 返回主页</a></p>
-  <div id="list"></div>
-  <div class="pagination" id="pagination"></div>
-
-  <script>
-    async function loadNotes() {
-      const response = await fetch("notes.json");
-      const notes = await response.json();
-
-      const files = Object.keys(notes);
-      const parsed = files.map(filename => {
-        const match = filename.match(/resume-(\\d{4}-\\d{2}-\\d{2})-([a-z0-9]+)\\.pdf/);
-        if (!match) return null;
-        return {
-          filename,
-          date: match[1],
-          hash: match[2],
-          desc: notes[filename],
-          timestamp: new Date(match[1]).getTime()
-        };
-      }).filter(Boolean).sort((a, b) => b.timestamp - a.timestamp);
-
-      return parsed;
-    }
-
-    function renderPage(data, page = 1, perPage = 10) {
-      const start = (page - 1) * perPage;
-      const end = start + perPage;
-      const slice = data.slice(start, end);
-
-      const list = document.getElementById("list");
-      list.innerHTML = "<ul>" + slice.map(item => `
-        <li>
-          <a href="\${item.filename}" target="_blank">\${item.date} 简历</a><br/>
-          <span class="note">\${item.desc}</span>
-        </li>`).join("") + "</ul>";
-
-      const totalPages = Math.ceil(data.length / perPage);
-      const pagination = document.getElementById("pagination");
-      pagination.innerHTML = `
-        第 \${page} 页（共 \${totalPages} 页）<br/>
-        \${page > 1 ? '<button onclick="renderPage(parsedData, ' + (page - 1) + ')">← 上一页</button>' : ''}
-        \${page < totalPages ? '<button onclick="renderPage(parsedData, ' + (page + 1) + ')">下一页 →</button>' : ''}
-      `;
-    }
-
-    let parsedData = [];
-    loadNotes().then(data => {
-      parsedData = data;
-      renderPage(parsedData, 1);
-    });
-  </script>
-</body>
-</html>' > resumes.html
-
-      - name: Commit and push to gh-pages
-        run: |
-          cd gh-pages
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add .
-          git commit -m "Update resume: ${{ steps.meta.outputs.filename }}" || echo "No changes"
-          git push origin gh-pages
+          name: main.pdf
+          path: output/main.pdf
+          if-no-files-found: error
+          compression-level: 0   # 强制不压缩（仍为 zip，但无压缩）
