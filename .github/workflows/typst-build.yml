@@ -1,0 +1,28 @@
+name: Build Typst Resume
+
+on:
+  push:
+    paths:
+      - 'main.typ'
+      - '**/*.typ'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Typst
+        uses: typst-community/setup-typst@v3
+
+      - name: Compile main.typ
+        run: typst compile main.typ
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: main-pdf
+          path: main.pdf
