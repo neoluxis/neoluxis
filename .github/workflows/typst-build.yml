@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main branch
+      - name: Checkout source
         uses: actions/checkout@v3
 
       - name: Set up Typst
@@ -45,23 +45,20 @@ jobs:
           ref: gh-pages
           path: gh-pages
 
-      - name: Copy PDF and update notes
+      - name: Copy PDF and update notes.json
         run: |
           cd gh-pages
-          FILENAME="${{ steps.meta.outputs.filename }}"
-          MESSAGE="${{ steps.meta.outputs.message }}"
+          cp ../output/${{ steps.meta.outputs.filename }} .
 
-          cp ../output/$FILENAME .
+          # Init notes.json if not present
+          if [ ! -f notes.json ]; then echo '{}' > notes.json; fi
 
           # Update notes.json
-          if [ ! -f notes.json ]; then
-            echo '{}' > notes.json
-          fi
+          jq --arg f "${{ steps.meta.outputs.filename }}" --arg m "${{ steps.meta.outputs.message }}" '. + {($f): .[$f] // $m}' notes.json > tmp.json && mv tmp.json notes.json
 
-          jq --arg f "$FILENAME" --arg m "$MESSAGE" '. + {($f): .[$f] // $m}' notes.json > tmp.json && mv tmp.json notes.json
-
-          # Generate index.html
-          cat > index.html <<EOF
+      - name: Write resumes.html
+        run: |
+          cat > gh-pages/resumes.html <<'EOF'
 <!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -75,56 +72,93 @@ jobs:
     .note { color: #555; font-size: 0.9em; }
     .pagination { margin-top: 2em; }
     .pagination button { margin: 0 5px; }
+    a.button { text-decoration: none; background: #ccc; padding: 0.3em 0.6em; border-radius: 4px; color: black; }
   </style>
 </head>
 <body>
   <h1>历史简历版本</h1>
+  <p><a class="button" href="index.html">← 返回主页</a></p>
   <div id="list"></div>
   <div class="pagination" id="pagination"></div>
 
   <script>
-    const notes = $(cat notes.json);
-    const files = Object.keys(notes);
-    const parsed = files.map(filename => {
-      const match = filename.match(/resume-(\\d{4}-\\d{2}-\\d{2})-([a-z0-9]+)\\.pdf/);
-      if (!match) return null;
-      return {
-        filename,
-        date: match[1],
-        hash: match[2],
-        desc: notes[filename],
-        timestamp: new Date(match[1]).getTime()
-      };
-    }).filter(Boolean).sort((a, b) => b.timestamp - a.timestamp);
+    async function loadNotes() {
+      const response = await fetch('notes.json');
+      const notes = await response.json();
 
-    const perPage = 10;
-    let currentPage = 1;
+      const files = Object.keys(notes);
+      const parsed = files.map(filename => {
+        const match = filename.match(/resume-(\\d{4}-\\d{2}-\\d{2})-([a-z0-9]+)\\.pdf/);
+        if (!match) return null;
+        return {
+          filename,
+          date: match[1],
+          hash: match[2],
+          desc: notes[filename],
+          timestamp: new Date(match[1]).getTime()
+        };
+      }).filter(Boolean).sort((a, b) => b.timestamp - a.timestamp);
 
-    function renderPage(page) {
-      const start = (page - 1) * perPage;
-      const end = start + perPage;
-      const slice = parsed.slice(start, end);
-
-      const list = document.getElementById("list");
-      list.innerHTML = "<ul>" + slice.map(item => \`
-        <li>
-          <a href="\${item.filename}">\${item.date} 简历</a><br/>
-          <span class="note">\${item.desc}</span>
-        </li>\`).join("") + "</ul>";
-
-      const totalPages = Math.ceil(parsed.length / perPage);
-      const pagination = document.getElementById("pagination");
-      pagination.innerHTML = \`
-        第 \${page} 页（共 \${totalPages} 页）
-        \${page > 1 ? '<button onclick="renderPage(' + (page - 1) + ')">← 上一页</button>' : ''}
-        \${page < totalPages ? '<button onclick="renderPage(' + (page + 1) + ')">下一页 →</button>' : ''}
-      \`;
-
-      currentPage = page;
+      return parsed;
     }
 
-    renderPage(1);
+    function renderPage(data, page = 1, perPage = 10) {
+      const start = (page - 1) * perPage;
+      const end = start + perPage;
+      const slice = data.slice(start, end);
+
+      const list = document.getElementById("list");
+      list.innerHTML = "<ul>" + slice.map(item => `
+        <li>
+          <a href="${item.filename}" target="_blank">${item.date} 简历</a><br/>
+          <span class="note">${item.desc}</span>
+        </li>`).join("") + "</ul>";
+
+      const totalPages = Math.ceil(data.length / perPage);
+      const pagination = document.getElementById("pagination");
+      pagination.innerHTML = `
+        第 ${page} 页（共 ${totalPages} 页）<br/>
+        ${page > 1 ? '<button onclick="renderPage(parsedData, ' + (page - 1) + ')">← 上一页</button>' : ''}
+        ${page < totalPages ? '<button onclick="renderPage(parsedData, ' + (page + 1) + ')">下一页 →</button>' : ''}
+      `;
+    }
+
+    let parsedData = [];
+    loadNotes().then(data => {
+      parsedData = data;
+      renderPage(parsedData, 1);
+    });
   </script>
+</body>
+</html>
+EOF
+
+      - name: Write index.html (homepage)
+        run: |
+          cat > gh-pages/index.html <<'EOF'
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>我的简历主页</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; max-width: 800px; margin: auto; }
+    h1 { font-size: 2em; margin-bottom: 0.5em; }
+    a.button {
+      display: inline-block;
+      padding: 0.5em 1em;
+      background: #007acc;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-top: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>欢迎来到我的简历主页</h1>
+  <p>查看不同时间点生成的 PDF 简历历史版本，包含自动描述、分页展示。</p>
+  <a class="button" href="resumes.html">📄 查看简历历史版本</a>
 </body>
 </html>
 EOF
