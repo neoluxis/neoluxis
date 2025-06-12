@@ -1,4 +1,4 @@
-name: Build Typst Chinese PDF
+name: Build Typst Chinese PDF and Deploy to Pages
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,10 +30,37 @@ jobs:
           mkdir -p output
           typst compile main.typ output/main.pdf
 
-      - name: Upload PDF (uncompressed)
-        uses: actions/upload-artifact@v4
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v3
         with:
-          name: main.pdf
-          path: output/main.pdf
-          if-no-files-found: error
-          compression-level: 0   # 强制不压缩（仍为 zip，但无压缩）
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy PDF and generate index.html
+        run: |
+          cp output/main.pdf gh-pages/main.pdf
+          cat > gh-pages/index.html <<EOF
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>简历预览</title>
+  <style>
+    body, html { margin: 0; height: 100%; }
+    embed { width: 100%; height: 100%; border: none; }
+  </style>
+</head>
+<body>
+  <embed src="main.pdf" type="application/pdf">
+</body>
+</html>
+EOF
+
+      - name: Commit and push to gh-pages
+        run: |
+          cd gh-pages
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          git commit -m "Update PDF at $(date +%Y-%m-%dT%H:%M:%S)"
+          git push origin gh-pages
