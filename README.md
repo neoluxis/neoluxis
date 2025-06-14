@@ -29,7 +29,10 @@ Welcome to my GitHub profile! Read to know more about me.
 	- Flask
 	- Aardio (A quick desktop app development tool for Windows)
 	- OpenCV
-	- OpenMV 
+	- OpenMV
+        - Golang
+        - Unity
+        - Mujoco
 - Gender: Male
 - Hobbies: I like to read or go watching movies when spare. I also play the guitar. 
 - Email: neolux_lee@outlook.com
