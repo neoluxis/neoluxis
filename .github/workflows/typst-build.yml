@@ -1,4 +1,4 @@
-name: Build Typst Chinese PDF
+name: Build Typst Multilingual PDFs
 
 on:
   push:
@@ -17,21 +17,45 @@ jobs:
       - name: Install Typst
         uses: typst-community/setup-typst@v3
 
-      - name: Install Chinese fonts
+      - name: Install Chinese and Japanese fonts
         run: |
           sudo apt-get update
-          sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra fonts-noto-color-emoji
+          sudo apt-get install -y \
+            fonts-noto-cjk fonts-noto-cjk-extra fonts-noto-color-emoji
+
       - name: Set up font cache
         run: fc-cache -fv
 
-      - name: Compile main.typ
+      - name: Compile PDFs
         run: |
-          mkdir -p output
-          typst compile main.typ output/main.pdf
-      - name: Upload PDF (uncompressed)
+          mkdir -pv output
+
+          # 编译中文版本
+          typst compile main.zh.typ output/resume.zh.pdf
+
+          # 编译英文版本
+          typst compile main.en.typ output/resume.en.pdf
+
+          # 编译日文版本
+          typst compile main.ja.typ output/resume.ja.pdf
+
+      - name: Upload PDFs (separate)
         uses: actions/upload-artifact@v4
         with:
-          name: main.pdf
-          path: output/main.pdf
+          name: multilingual-resumes
+          path: output/
           if-no-files-found: error
-          compression-level: 0   # 强制不压缩（仍为 zip，但无压缩）
+          compression-level: 0
+
+      - name: Create ZIP of all PDFs
+        run: |
+          cd output
+          zip multilingual-resumes.zip *.pdf
+
+      - name: Upload ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: multilingual-resumes-zip
+          path: output/multilingual-resumes.zip
+          if-no-files-found: error
+

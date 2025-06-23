@@ -1,4 +1,4 @@
- #import emoji: star, checkmark
+#import emoji: star, checkmark
 #import "@preview/bone-resume:0.3.0": resume-init, resume-section
 
 #show: resume-init.with(
