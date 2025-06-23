@@ -31,7 +31,7 @@ jobs:
           mkdir -pv output
 
           # 编译中文版本
-          typst compile main.zh.typ output/resume.zh.pdf
+          typst compile main.typ output/resume.zh.pdf
 
           # 编译英文版本
           typst compile main.en.typ output/resume.en.pdf
