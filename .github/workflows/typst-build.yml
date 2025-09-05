@@ -39,14 +39,30 @@ jobs:
           # 编译日文版本
           typst compile main.ja.typ output/resume.ja.pdf
 
-      - name: Upload PDFs (separate)
+      - name: Upload PDFcn
         uses: actions/upload-artifact@v4
         with:
-          name: multilingual-resumes
-          path: output/
+          name: resume.cn.pdf
+          path: output/resume.cn.pdf
           if-no-files-found: error
           compression-level: 0
+ 
+      - name: Upload PDFen
+        uses: actions/upload-artifact@v4
+        with:
+          name: resume.en.pdf
+          path: output/resume.en.pdf
+          if-no-files-found: error
+          compression-level: 0         
 
+      - name: Upload PDFja
+        uses: actions/upload-artifact@v4
+        with:
+          name: resume.ja.pdf
+          path: output/resume.ja.pdf
+          if-no-files-found: error
+          compression-level: 0
+          
       - name: Create ZIP of all PDFs
         run: |
           cd output
