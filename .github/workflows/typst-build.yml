@@ -39,11 +39,11 @@ jobs:
           # 编译日文版本
           typst compile main.ja.typ output/resume.ja.pdf
 
-      - name: Upload PDFcn
+      - name: Upload PDFzh
         uses: actions/upload-artifact@v4
         with:
-          name: resume.cn.pdf
-          path: output/resume.cn.pdf
+          name: resume.zh.pdf
+          path: output/resume.zh.pdf
           if-no-files-found: error
           compression-level: 0
  
