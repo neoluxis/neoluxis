@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multilingual Resumes</title>
+    <title>Download Resumes</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,6 +13,10 @@
         h1 {
             text-align: center;
             color: #333;
+        }
+        .resume-container {
+            text-align: center;
+            margin-top: 20px;
         }
         .resume-links {
             display: flex;
@@ -35,27 +39,83 @@
             width: 100%;
             height: 600px;
             border: none;
+            display: none;
+        }
+        select {
+            padding: 8px 12px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .btn-download {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: inline-block;
+        }
+        .btn-download:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
 
     <h1>Multilingual Resumes</h1>
-    
-    <!-- PDF Previews and Links -->
-    <div class="resume-links">
-        <a href="resume.zh.pdf" class="resume-link" target="_blank">Download Chinese Resume</a>
-        <a href="resume.en.pdf" class="resume-link" target="_blank">Download English Resume</a>
-        <a href="resume.ja.pdf" class="resume-link" target="_blank">Download Japanese Resume</a>
+
+    <div class="resume-container">
+        <!-- Language Selector -->
+        <label for="language-select">Select Language: </label>
+        <select id="language-select" onchange="changeLanguage()">
+            <option value="zh">Chinese</option>
+            <option value="en">English</option>
+            <option value="ja">Japanese</option>
+        </select>
+
+        <!-- Resume Previews -->
+        <div class="resume-preview" id="preview-zh">
+            <iframe src="resume.zh.pdf"></iframe>
+        </div>
+        <div class="resume-preview" id="preview-en">
+            <iframe src="resume.en.pdf"></iframe>
+        </div>
+        <div class="resume-preview" id="preview-ja">
+            <iframe src="resume.ja.pdf"></iframe>
+        </div>
+
+        <!-- Download Buttons -->
+        <div class="resume-links">
+            <a href="resume.zh.pdf" id="download-zh" class="resume-link" style="display: none;" download>Download Chinese Resume</a>
+            <a href="resume.en.pdf" id="download-en" class="resume-link" style="display: none;" download>Download English Resume</a>
+            <a href="resume.ja.pdf" id="download-ja" class="resume-link" style="display: none;" download>Download Japanese Resume</a>
+        </div>
     </div>
-    
-    <!-- PDF Preview Section -->
-    <h2>Preview PDFs</h2>
-    <div class="resume-preview-section">
-        <iframe class="resume-preview" src="resume.zh.pdf"></iframe>
-        <iframe class="resume-preview" src="resume.en.pdf"></iframe>
-        <iframe class="resume-preview" src="resume.ja.pdf"></iframe>
-    </div>
+
+    <script>
+        // Function to change language based on dropdown selection
+        function changeLanguage() {
+            // Hide all previews
+            document.getElementById('preview-zh').style.display = 'none';
+            document.getElementById('preview-en').style.display = 'none';
+            document.getElementById('preview-ja').style.display = 'none';
+
+            // Hide all download buttons
+            document.getElementById('download-zh').style.display = 'none';
+            document.getElementById('download-en').style.display = 'none';
+            document.getElementById('download-ja').style.display = 'none';
+
+            // Get the selected language
+            var language = document.getElementById('language-select').value;
+
+            // Show the corresponding preview and download button
+            document.getElementById('preview-' + language).style.display = 'block';
+            document.getElementById('download-' + language).style.display = 'inline-block';
+        }
+
+        // Initial language set to Chinese (default)
+        changeLanguage();
+    </script>
 
 </body>
 </html>
