@@ -1,7 +1,7 @@
 BUILD = output
 
 FN = resume_likangfeng
-FD = `date --iso-8601=seconds`
+FD = `date +"%Y%m%d-%H%M%S"`
 COMMIT_HASH = `git rev-parse --short HEAD`
 
 CN_DOC = main.typ
