@@ -1,121 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download Resumes</title>
+    <title>Multilingual Resumes</title>
     <style>
+        /* Basic styling for the page */
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
+            display: flex;
+            height: 100vh;
+            margin: 0;
             background-color: #f4f4f9;
         }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        .resume-container {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .resume-links {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .resume-link {
-            background-color: #4CAF50;
+
+        /* Left sidebar */
+        #sidebar {
+            width: 250px;
+            background-color: #333;
             color: white;
-            padding: 10px 20px;
-            text-decoration: none;
+            padding: 20px;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        #sidebar h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .file-item {
+            cursor: pointer;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #444;
             border-radius: 5px;
             transition: background-color 0.3s;
         }
-        .resume-link:hover {
-            background-color: #45a049;
+
+        .file-item:hover {
+            background-color: #555;
         }
-        .resume-preview {
+
+        /* Right content area */
+        #content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        iframe {
             width: 100%;
-            height: 600px;
+            height: 80vh;
             border: none;
-            display: none;
         }
-        select {
-            padding: 8px 12px;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-        .btn-download {
+
+        /* Language selector at the top */
+        #lang-selector {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
             background-color: #007BFF;
             color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 5px;
-            margin-top: 20px;
-            display: inline-block;
+            padding: 10px 0;
         }
-        .btn-download:hover {
+
+        #lang-selector select {
             background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .file-item.active {
+            background-color: #0069d9;
         }
     </style>
 </head>
+
 <body>
 
-    <h1>Multilingual Resumes</h1>
-
-    <div class="resume-container">
-        <!-- Language Selector -->
-        <label for="language-select">Select Language: </label>
-        <select id="language-select" onchange="changeLanguage()">
-            <option value="zh">Chinese</option>
-            <option value="en">English</option>
-            <option value="ja">Japanese</option>
-        </select>
-
-        <!-- Resume Previews -->
-        <div class="resume-preview" id="preview-zh">
-            <iframe src="resume.zh.pdf"></iframe>
-        </div>
-        <div class="resume-preview" id="preview-en">
-            <iframe src="resume.en.pdf"></iframe>
-        </div>
-        <div class="resume-preview" id="preview-ja">
-            <iframe src="resume.ja.pdf"></iframe>
-        </div>
-
-        <!-- Download Buttons -->
-        <div class="resume-links">
-            <a href="resume.zh.pdf" id="download-zh" class="resume-link" style="display: none;" download>Download Chinese Resume</a>
-            <a href="resume.en.pdf" id="download-en" class="resume-link" style="display: none;" download>Download English Resume</a>
-            <a href="resume.ja.pdf" id="download-ja" class="resume-link" style="display: none;" download>Download Japanese Resume</a>
+    <!-- Left Sidebar (File Browser) -->
+    <div id="sidebar">
+        <h2>Commit History</h2>
+        <div id="file-list">
+            <!-- File items will be dynamically added here -->
         </div>
     </div>
 
+    <!-- Right Content Area -->
+    <div id="content">
+        <!-- Language Selector -->
+        <div id="lang-selector">
+            <select id="language-select" onchange="changeLanguage()">
+                <option value="zh">Chinese</option>
+                <option value="en">English</option>
+                <option value="ja">Japanese</option>
+            </select>
+        </div>
+
+        <!-- PDF Preview -->
+        <iframe id="pdf-preview" src="" style="display:none;"></iframe>
+    </div>
+
     <script>
-        // Function to change language based on dropdown selection
-        function changeLanguage() {
-            // Hide all previews
-            document.getElementById('preview-zh').style.display = 'none';
-            document.getElementById('preview-en').style.display = 'none';
-            document.getElementById('preview-ja').style.display = 'none';
+        const apiUrl = 'https://api.github.com/repos/neoluxis/neoluxis/commits'; // GitHub API URL to get commit history
+        const pdfFiles = {}; // Store PDF files by commit hash
 
-            // Hide all download buttons
-            document.getElementById('download-zh').style.display = 'none';
-            document.getElementById('download-en').style.display = 'none';
-            document.getElementById('download-ja').style.display = 'none';
+        // Function to fetch commits and associated PDF files
+        async function fetchCommitHistory() {
+            try {
+                const response = await fetch(apiUrl);
+                const commits = await response.json();
+                const fileListElement = document.getElementById('file-list');
+                fileListElement.innerHTML = ''; // Clear existing items
 
-            // Get the selected language
-            var language = document.getElementById('language-select').value;
+                // Parse commit history and add file items to the sidebar
+                commits.forEach(commit => {
+                    const commitMessage = commit.commit.message;
+                    const commitHash = commit.sha;
+                    const fileName = `resume.${commitMessage}.pdf`; // Assuming commit message has the language code
 
-            // Show the corresponding preview and download button
-            document.getElementById('preview-' + language).style.display = 'block';
-            document.getElementById('download-' + language).style.display = 'inline-block';
+                    pdfFiles[commitHash] = {
+                        fileName: fileName,
+                        sha: commitHash,
+                    };
+
+                    const fileItem = document.createElement('div');
+                    fileItem.classList.add('file-item');
+                    fileItem.innerText = `${commitMessage} (${commitHash.substring(0, 7)})`;
+                    fileItem.onclick = () => loadPDF(commitHash);
+                    fileListElement.appendChild(fileItem);
+                });
+            } catch (error) {
+                console.error('Error fetching commit history:', error);
+            }
         }
 
-        // Initial language set to Chinese (default)
-        changeLanguage();
+        // Function to change language based on selection
+        function changeLanguage() {
+            const selectedLanguage = document.getElementById('language-select').value;
+            const activeCommitHash = document.querySelector('.file-item.active');
+
+            if (activeCommitHash) {
+                const selectedPdf = pdfFiles[activeCommitHash.dataset.commitHash];
+                if (selectedPdf && selectedPdf.fileName.includes(selectedLanguage)) {
+                    document.getElementById('pdf-preview').src = `https://neoluxis.github.io/neoluxis/${selectedPdf.fileName}`;
+                    document.getElementById('pdf-preview').style.display = 'block';
+                }
+            }
+        }
+
+        // Function to load a PDF by commit hash
+        function loadPDF(commitHash) {
+            // Mark the clicked item as active
+            document.querySelectorAll('.file-item').forEach(item => item.classList.remove('active'));
+            const clickedItem = document.querySelector(`.file-item[data-commit-hash="${commitHash}"]`);
+            clickedItem.classList.add('active');
+
+            // Update the PDF preview
+            const selectedPdf = pdfFiles[commitHash];
+            if (selectedPdf) {
+                document.getElementById('pdf-preview').src = `https://neoluxis.github.io/neoluxis/${selectedPdf.fileName}`;
+                document.getElementById('pdf-preview').style.display = 'block';
+            }
+        }
+
+        // Initial fetch of commits and loading of first PDF
+        window.onload = fetchCommitHistory;
     </script>
 
 </body>
+
 </html>
