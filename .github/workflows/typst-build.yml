@@ -28,22 +28,13 @@ jobs:
 
       - name: Compile PDFs
         run: |
-          mkdir -pv output
-
-          # 编译中文版本
-          typst compile main.typ output/resume.zh.pdf
-
-          # 编译英文版本
-          typst compile main.en.typ output/resume.en.pdf
-
-          # 编译日文版本
-          typst compile main.ja.typ output/resume.ja.pdf
+          make all
 
       - name: Upload PDFzh
         uses: actions/upload-artifact@v4
         with:
           name: resume.zh.pdf
-          path: output/resume.zh.pdf
+          path: output/*.zh.pdf
           if-no-files-found: error
           compression-level: 0
  
@@ -51,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: resume.en.pdf
-          path: output/resume.en.pdf
+          path: output/*.en.pdf
           if-no-files-found: error
           compression-level: 0         
 
@@ -59,7 +50,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: resume.ja.pdf
-          path: output/resume.ja.pdf
+          path: output/*.ja.pdf
           if-no-files-found: error
           compression-level: 0
           
