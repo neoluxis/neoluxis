@@ -54,11 +54,11 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           
-      - name: Upload PDFja
+      - name: Upload PDFsimple
         uses: actions/upload-artifact@v4
         with:
-          name: *_simple.pdf
-          path: output/.pdf
+          name: resume_simple.pdf
+          path: output/*_simple.pdf
           if-no-files-found: error
           compression-level: 0
 
