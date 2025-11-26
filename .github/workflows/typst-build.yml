@@ -54,6 +54,14 @@ jobs:
           if-no-files-found: error
           compression-level: 0
           
+      - name: Upload PDFja
+        uses: actions/upload-artifact@v4
+        with:
+          name: *_simple.pdf
+          path: output/.pdf
+          if-no-files-found: error
+          compression-level: 0
+
       - name: Create ZIP of all PDFs
         run: |
           cd output

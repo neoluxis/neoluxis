@@ -7,6 +7,10 @@ COMMIT_HASH = `git rev-parse --short HEAD`
 CN_DOC = main.typ
 EN_DOC = main.en.typ
 JA_DOC = main.ja.typ
+NEW_DOC = new.typ
+
+new: prereq
+	typst compile $(NEW_DOC) $(BUILD)/$(FN)_$(FD)-$(COMMIT_HASH)_simple.pdf
 
 zh: prereq
 	typst compile $(CN_DOC) $(BUILD)/$(FN)_$(FD)-$(COMMIT_HASH).zh.pdf 
@@ -17,7 +21,7 @@ en: prereq
 ja: prereq
 	typst compile $(JA_DOC) $(BUILD)/$(FN)_$(FD)-$(COMMIT_HASH).ja.pdf
 
-all: clean prereq zh en ja 
+all: clean prereq zh en ja new
 
 prereq:
 	@mkdir -pv $(BUILD)
