@@ -10,7 +10,7 @@
 
 // Feel free to change the margin below to best fit your own CV
 #set page(
-  margin: (x: 0.9cm, y: 1.5cm),
+  margin: (x: 0.9cm, y: 1cm),
 )
 
 // For more customizable options, please refer to official reference: https://typst.app/docs/reference/
@@ -156,6 +156,7 @@
   [全国大学生工程实践与创新能力大赛全国特等奖],
   [浙江省大学生机器人竞赛冠军],
   [全国大学生智能汽车竞赛全国一等奖],
+  [全国大学生电子设计竞赛全国二等奖],
   [CET 6级证书],
   [海康机器人认证初级工程师证书],
 )
