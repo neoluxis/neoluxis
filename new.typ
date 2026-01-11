@@ -143,7 +143,7 @@
 
   "Linux", [长期使用 Linux，熟悉嵌入式 Linux 平台视觉算法部署与调试],
 
-  "CAD/仿真", [熟练使用 SolidWorks, Blender 进行 3D 设计；熟悉 Mujoco、Gazebo 机器人仿真开发],
+  "CAD/仿真", [熟练使用 SolidWorks, Blender 进行 3D 设计；了解 Mujoco 机器人仿真开发],
 
   "TensorFlow", [基础了解，能实现深度学习模型并训练部署],
 )
