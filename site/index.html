@@ -117,6 +117,18 @@
         font-weight: 600;
       }
 
+      .button.secondary {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid rgba(47, 133, 90, 0.28);
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
       .footer {
         margin-top: 26px;
         color: var(--muted);
@@ -143,19 +155,28 @@
         <article class="card">
           <h2>算法方向</h2>
           <p>计算机视觉、深度学习、YOLO、三维重建与感知算法工程落地经验。</p>
-          <a class="button" href="./pdfs/resume-algo.pdf">下载 PDF</a>
+          <div class="actions">
+            <a class="button secondary" href="./pdfs/resume-algo.pdf" target="_blank" rel="noopener noreferrer">在线预览</a>
+            <a class="button" href="./pdfs/resume-algo.pdf" download="resume-algo.pdf">下载 PDF</a>
+          </div>
         </article>
 
         <article class="card">
           <h2>嵌入式方向</h2>
           <p>STM32、工具链、PCB、控制通信、联调与软硬件协同开发经验。</p>
-          <a class="button" href="./pdfs/resume-embedded.pdf">下载 PDF</a>
+          <div class="actions">
+            <a class="button secondary" href="./pdfs/resume-embedded.pdf" target="_blank" rel="noopener noreferrer">在线预览</a>
+            <a class="button" href="./pdfs/resume-embedded.pdf" download="resume-embedded.pdf">下载 PDF</a>
+          </div>
         </article>
 
         <article class="card">
           <h2>机器人方向</h2>
           <p>ROS2、机器人系统集成、感知导航、多传感器与机器人项目经验。</p>
-          <a class="button" href="./pdfs/resume-robot.pdf">下载 PDF</a>
+          <div class="actions">
+            <a class="button secondary" href="./pdfs/resume-robot.pdf" target="_blank" rel="noopener noreferrer">在线预览</a>
+            <a class="button" href="./pdfs/resume-robot.pdf" download="resume-robot.pdf">下载 PDF</a>
+          </div>
         </article>
       </section>
 
