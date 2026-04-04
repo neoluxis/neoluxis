@@ -4,8 +4,9 @@
 #let show_detail_proj = 1
 #let show_duty = 1
 #let projblock = 0
-
-#show link: set text(fill: blue, weight: "bold")
+#let resume_theme = resume-init.with(
+  author: "李康峰",
+)
 
 
 #let resume_header(direction_label) = [
@@ -34,11 +35,30 @@
   #line(length: 100%)
 ]
 
-#let exp_item(project, time, back, result, duty: none) = {
+#let skill_entry(name, desc, highlight: false) = (
+  if highlight { text(weight: "bold")[#name] } else { name },
+  desc,
+)
+
+#let project_entry(project, time, back, result, duty, highlight) = (
+  project,
+  time,
+  back,
+  result,
+  duty,
+  highlight,
+)
+
+#let exp_item(project, time, back, result, duty: none, highlight: false) = {
+  let project_title = if highlight {
+    text(weight: "bold")[#project]
+  } else {
+    project
+  }
   if show_detail_proj == 1 {
     if projblock == 0 {
       [
-        #project (#time)
+        #project_title #h(1fr) #time
 
         背景：#back
 
@@ -50,7 +70,7 @@
       ]
     } else {
       resume-section(
-        [#project],
+        [#project_title],
         time,
       )[
         背景：#back
@@ -80,6 +100,7 @@
           pro.at(2),
           pro.at(3),
           duty: pro.at(4),
+          highlight: pro.at(5, default: false),
         )
 
     ]
@@ -91,7 +112,7 @@
     columns: (72pt, 1fr),
     rows: auto,
     gutter: 6pt,
-    row-gutter: 0.4em,
+    row-gutter: 0.65em,
     ..skills,
   )
 ]
