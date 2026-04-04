@@ -1,5 +1,6 @@
 #show heading: set text(font: "Noto Serif CJK SC")
 
+#set text(font: "Noto Serif CJK SC", lang: "zh", region: "cn")
 // #show link: underline
 
 // Uncomment the following lines to adjust the size of text
